@@ -20,7 +20,7 @@ public class FacultyController {
         return facultyService.getAllFaculties();
     }
 
-    @GetMapping
+    @GetMapping("/find")
     public Collection<Faculty> findFacultiesByColor(@RequestParam String color) {
         return facultyService.getFacultiesByColor(color);
     }
