@@ -1,80 +1,121 @@
 package ru.hogwarts.school.service;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Student;
+import ru.hogwarts.school.repository.StudentRepository;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class StudentServiceTest {
-    private final StudentService out = new StudentService();
-    private final Student mockStudent1 = new Student(1L, "Ivan Ivanovich Ivanov", 17);
-    private final Student mockStudent2 = new Student(2L, "Petr Petrovich Petrov", 19);
+    private final Student mockStudent1 = new Student();
+    private final Student mockStudent2 = new Student();
+
+    {
+        mockStudent1.setName("Ivan Ivanovich Ivanov");
+        mockStudent1.setAge(17);
+
+        mockStudent2.setName("Petr Petrovich Petrov");
+        mockStudent2.setAge(19);
+    }
+
+    @Mock
+    private StudentRepository studentRepository;
+
+    @InjectMocks
+    private StudentService studentService;
 
     @Test
     void shouldAddStudent_ThenReturnThatStudent() {
-        Long result = out.addStudent(mockStudent1);
-        Collection<Student> allStudents = out.getAllStudents();
+        mockStudent1.setId(1L);
+        when(studentRepository.save(any(Student.class))).thenReturn(mockStudent1);
+
+        long result = studentService.addStudent(mockStudent1);
 
         assertThat(result).isEqualTo(mockStudent1.getId());
-        assertThat(allStudents).contains(mockStudent1);
-        assertThat(allStudents).hasSize(1);
+
+        verify(studentRepository, times(1)).save(eq(mockStudent1));
     }
 
     @Test
     void shouldFindStudentById_ThenReturnThatStudent() {
-        Long expected = out.addStudent(mockStudent1);
-        Student result = out.findStudent(expected);
+        mockStudent1.setId(2L);
+        when(studentRepository.findById(mockStudent1.getId())).thenReturn(Optional.of(mockStudent1));
+
+        Student result = studentService.findStudent(mockStudent1.getId());
 
         assertThat(result).isEqualTo(mockStudent1);
-        assertThat(result.getId()).isEqualTo(expected);
+
+        verify(studentRepository, times(1)).findById(eq(mockStudent1.getId()));
     }
 
     @Test
     void shouldFindStudentById_WhenStudentNotExists_ThenThrowStudentNotFoundException() {
-        assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> out.findStudent(mockStudent1.getId()));
+        mockStudent1.setId(3L);
+        when(studentRepository.findById(mockStudent1.getId())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> studentService.findStudent(mockStudent1.getId()));
+
+        verify(studentRepository, times(1)).findById(eq(mockStudent1.getId()));
     }
 
     @Test
     void shouldUpdateStudent_WhenStudentExists_ThenReturnThatStudent() {
-        Long mockStudent3Id = out.addStudent(mockStudent1);
-        Student mockStudent3 = new Student(mockStudent3Id, "Sidr Sidorovich Sidorov", 25);
+        mockStudent1.setId(4L);
+        when(studentRepository.save(any(Student.class))).thenReturn(mockStudent1);
 
-        Student result = out.updateStudent(mockStudent3);
+        Student result = studentService.updateStudent(mockStudent1);
 
-        assertThat(result).isEqualTo(mockStudent3);
-    }
+        assertThat(result).isEqualTo(mockStudent1);
 
-    @Test
-    void shouldUpdateStudent_WhenStudentNotExists_ThenThrowStudentNotFoundException() {
-        assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> out.updateStudent(mockStudent1));
+        verify(studentRepository, times(1)).save(eq(mockStudent1));
     }
 
     @Test
     void shouldDeleteStudent_ThenReturnThatStudent() {
-        Long expected = out.addStudent(mockStudent1);
-        out.deleteStudent(expected);
-        Collection<Student> allStudents = out.getAllStudents();
+        mockStudent1.setId(5L);
 
-        assertThat(allStudents).hasSize(0);
-    }
+        studentService.deleteStudent(mockStudent1.getId());
 
-    @Test
-    void shouldDeleteStudent_WhenStudentNotExists_ThenThrowStudentNotFoundException() {
-        assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> out.deleteStudent(1L));
+        verify(studentRepository, times(1)).deleteById(eq(mockStudent1.getId()));
     }
 
     @Test
     void shouldReturnAllStudents_ThenReturnTheseAllStudents() {
-        Long result1 = out.addStudent(mockStudent1);
-        Long result2 = out.addStudent(mockStudent2);
-        Collection<Student> allStudents = out.getAllStudents();
+        mockStudent1.setId(6L);
+        mockStudent2.setId(7L);
+        List<Student> mockStudentList = List.of(mockStudent1, mockStudent2);
 
-        assertThat(result1).isEqualTo(mockStudent1.getId());
-        assertThat(result2).isEqualTo(mockStudent2.getId());
-        assertThat(allStudents).hasSize(2);
+        when(studentRepository.findAll()).thenReturn(mockStudentList);
+
+        Collection<Student> result = studentService.getAllStudents();
+
+        assertThat(result).isEqualTo(mockStudentList);
+    }
+
+    @Test
+    void shouldReturnStudentsByDefinedAge_ThenReturnTheseStudentsByCorrespondingAge() {
+        mockStudent1.setId(8L);
+        mockStudent2.setId(9L);
+        List<Student> mockStudentList = List.of(mockStudent2);
+
+        when(studentRepository.findByAge(mockStudent2.getAge())).thenReturn(mockStudentList);
+
+        Collection<Student> result = studentService.getStudentsByAge(mockStudent2.getAge());
+
+        assertThat(result).isEqualTo(mockStudentList);
     }
 }
