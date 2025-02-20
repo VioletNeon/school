@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.hogwarts.school.exception.StudentNotFoundException;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
@@ -117,5 +118,52 @@ public class StudentServiceTest {
         Collection<Student> result = studentService.getStudentsByAge(mockStudent2.getAge());
 
         assertThat(result).isEqualTo(mockStudentList);
+    }
+
+    @Test
+    void shouldReturnStudentsByDefinedAgeRange_ThenReturnTheseStudentsByCorrespondingAgeRange() {
+        mockStudent1.setId(10L);
+        mockStudent2.setId(11L);
+        List<Student> mockStudentList = List.of(mockStudent2);
+
+        when(studentRepository.findByAgeBetween(18, 20)).thenReturn(mockStudentList);
+
+        Collection<Student> result = studentService.getStudentsByAgeBetween(18, 20);
+
+        assertThat(result).isEqualTo(mockStudentList);
+    }
+
+    @Test
+    void shouldReturnFacultyOfStudent_ThenReturnFacultyCorrespondToStudent() {
+        mockStudent1.setId(12L);
+        mockStudent2.setId(13L);
+
+        List<Student> mockStudentList = List.of(mockStudent1);
+        Faculty mockFaculty = new Faculty();
+        mockFaculty.setColor("red");
+        mockFaculty.setName("Gryffindor");
+        mockFaculty.setId(1L);
+        mockFaculty.setStudents(mockStudentList);
+
+        mockStudent1.setFaculty(mockFaculty);
+
+        when(studentRepository.findById(mockStudent1.getId())).thenReturn(Optional.of(mockStudent1));
+
+        Faculty result = studentService.getStudentFaculty(mockStudent1.getId());
+
+        assertThat(result).isEqualTo(mockFaculty);
+
+        verify(studentRepository, times(1)).findById(eq(mockStudent1.getId()));
+    }
+
+    @Test
+    void shouldReturnFacultyOfStudent_WhenStudentNotExists_ThenThrowStudentNotFoundException() {
+        mockStudent2.setId(14L);
+
+        when(studentRepository.findById(mockStudent2.getId())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> studentService.getStudentFaculty(mockStudent2.getId()));
+
+        verify(studentRepository, times(1)).findById(eq(mockStudent2.getId()));
     }
 }
