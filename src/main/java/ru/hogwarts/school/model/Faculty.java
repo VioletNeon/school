@@ -1,13 +1,14 @@
 package ru.hogwarts.school.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 
+import java.util.Collection;
 import java.util.Objects;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Faculty {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -15,8 +16,20 @@ public class Faculty {
     private String name;
     private String color;
 
+    @OneToMany(mappedBy = "faculty", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Collection<Student> students;
+
     public long getId() {
         return id;
+    }
+
+    public Collection<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(Collection<Student> students) {
+        this.students = students;
     }
 
     public void setId(long id) {

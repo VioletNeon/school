@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.hogwarts.school.exception.FacultyNotFoundException;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 
 import java.util.Collection;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.*;
 public class FacultyServiceTest {
     private final Faculty mockFaculty1 = new Faculty();
     private final Faculty mockFaculty2 = new Faculty();
+    private final Faculty mockFaculty3 = new Faculty();
 
     {
         mockFaculty1.setName("Gryffindor");
@@ -28,6 +30,9 @@ public class FacultyServiceTest {
 
         mockFaculty2.setName("Slytherin");
         mockFaculty2.setColor("green");
+
+        mockFaculty3.setName("Raven claw");
+        mockFaculty3.setColor("blue");
     }
 
     @Mock
@@ -105,15 +110,81 @@ public class FacultyServiceTest {
     }
 
     @Test
-    void shouldReturnFacultiesByDefinedColor_ThenReturnTheseFacultiesByCorrespondingColor() {
+    void shouldReturnFacultiesByDefinedNameOrColor_WhenNameArgumentIsPassed_ThenReturnTheseFacultiesByCorrespondingName() {
         mockFaculty1.setId(8L);
         mockFaculty2.setId(9L);
         List<Faculty> mockFacultyList = List.of(mockFaculty2);
 
-        when(facultyRepository.findByColor(mockFaculty2.getColor())).thenReturn(mockFacultyList);
+        when(facultyRepository.findByNameOrColorIgnoreCase(mockFaculty2.getName(), null)).thenReturn(mockFacultyList);
 
-        Collection<Faculty> result = facultyService.getFacultiesByColor(mockFaculty2.getColor());
+        Collection<Faculty> result = facultyService.getFacultiesByNameOrColor(mockFaculty2.getName(), null);
 
         assertThat(result).isEqualTo(mockFacultyList);
+    }
+
+    @Test
+    void shouldReturnFacultiesByDefinedNameOrColor_WhenColorArgumentIsPassed_ThenReturnTheseFacultiesByCorrespondingColor() {
+        mockFaculty1.setId(10L);
+        mockFaculty2.setId(11L);
+        List<Faculty> mockFacultyList = List.of(mockFaculty1);
+
+        when(facultyRepository.findByNameOrColorIgnoreCase(null, mockFaculty1.getColor())).thenReturn(mockFacultyList);
+
+        Collection<Faculty> result = facultyService.getFacultiesByNameOrColor(null, mockFaculty1.getColor());
+
+        assertThat(result).isEqualTo(mockFacultyList);
+    }
+
+    @Test
+    void shouldReturnFacultiesByDefinedNameOrColor_WhenColorAndNameArgumentsArePassed_ThenReturnTheseFacultiesByCorrespondingNameAndColor() {
+        mockFaculty1.setId(12L);
+        mockFaculty2.setId(13L);
+        mockFaculty3.setId(14L);
+        List<Faculty> mockFacultyList = List.of(mockFaculty1, mockFaculty3);
+
+        when(facultyRepository.findByNameOrColorIgnoreCase(mockFaculty3.getName(), mockFaculty1.getColor())).thenReturn(mockFacultyList);
+
+        Collection<Faculty> result = facultyService.getFacultiesByNameOrColor(mockFaculty3.getName(), mockFaculty1.getColor());
+
+        assertThat(result).isEqualTo(mockFacultyList);
+    }
+
+    @Test
+    void shouldReturnStudentsOfFaculty_ThenReturnStudentsCorrespondToFaculty() {
+        Student mockStudent1 = new Student();
+        mockStudent1.setAge(15);
+        mockStudent1.setName("Fedor Fedorovich Fedorov");
+        mockStudent1.setId(1L);
+        mockStudent1.setFaculty(mockFaculty1);
+
+        Student mockStudent2 = new Student();
+        mockStudent2.setAge(13);
+        mockStudent2.setName("Semen Semenovich Semenov");
+        mockStudent2.setId(2L);
+        mockStudent2.setFaculty(mockFaculty1);
+
+        List<Student> mockStudentList = List.of(mockStudent1, mockStudent2);
+
+        mockFaculty1.setId(15L);
+        mockFaculty1.setStudents(mockStudentList);
+
+        when(facultyRepository.findById(mockFaculty1.getId())).thenReturn(Optional.of(mockFaculty1));
+
+        Collection<Student> result = facultyService.getFacultyStudents(mockFaculty1.getId());
+
+        assertThat(result).isEqualTo(mockStudentList);
+
+        verify(facultyRepository, times(1)).findById(eq(mockFaculty1.getId()));
+    }
+
+    @Test
+    void shouldReturnFacultyOfStudent_WhenStudentNotExists_ThenThrowStudentNotFoundException() {
+        mockFaculty2.setId(16L);
+
+        when(facultyRepository.findById(mockFaculty2.getId())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(FacultyNotFoundException.class).isThrownBy(() -> facultyService.getFacultyStudents(mockFaculty2.getId()));
+
+        verify(facultyRepository, times(1)).findById(eq(mockFaculty2.getId()));
     }
 }
