@@ -26,12 +26,12 @@ public class StudentController {
     }
 
     @GetMapping("{id}")
-    public Student getStudent(@PathVariable Long id) {
+    public Student getStudent(@PathVariable long id) {
         return studentService.findStudent(id);
     }
 
     @PostMapping
-    public Long addStudent(@RequestBody Student student) {
+    public long addStudent(@RequestBody Student student) {
         return studentService.addStudent(student);
     }
 
@@ -41,7 +41,7 @@ public class StudentController {
     }
 
     @DeleteMapping("{id}")
-    public void deleteStudent(@PathVariable Long id) {
+    public void deleteStudent(@PathVariable long id) {
         studentService.deleteStudent(id);
     }
 }
