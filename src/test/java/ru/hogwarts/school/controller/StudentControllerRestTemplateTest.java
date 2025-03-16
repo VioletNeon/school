@@ -26,7 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class StudentControllerTest {
+public class StudentControllerRestTemplateTest {
     private Student mockStudent1 = new Student();
     private Student mockStudent2 = new Student();
 

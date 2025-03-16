@@ -24,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class FacultyControllerTest {
+public class FacultyControllerRestTemplateTest {
     private Faculty mockFaculty1 = new Faculty();
     private Faculty mockFaculty2 = new Faculty();
 
