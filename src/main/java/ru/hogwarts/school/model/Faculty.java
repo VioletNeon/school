@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -18,17 +18,17 @@ public class Faculty {
 
     @OneToMany(mappedBy = "faculty", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Collection<Student> students;
+    private List<Student> students;
 
     public long getId() {
         return id;
     }
 
-    public Collection<Student> getStudents() {
+    public List<Student> getStudents() {
         return students;
     }
 
-    public void setStudents(Collection<Student> students) {
+    public void setStudents(List<Student> students) {
         this.students = students;
     }
 
