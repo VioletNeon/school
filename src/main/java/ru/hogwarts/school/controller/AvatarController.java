@@ -11,6 +11,7 @@ import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.service.AvatarService;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("avatar")
@@ -19,6 +20,11 @@ public class AvatarController {
 
     public AvatarController(AvatarService avatarService) {
         this.avatarService = avatarService;
+    }
+
+    @GetMapping
+    public List<Avatar> getAllAvatars(@RequestParam("page") Integer pageNumber, @RequestParam("size") Integer pageSize) {
+        return avatarService.getAllAvatars(pageNumber, pageSize);
     }
 
     @GetMapping(value = "/{studentId}/avatar/preview")

@@ -24,6 +24,9 @@ import static org.mockito.Mockito.*;
 public class StudentServiceTest {
     private final Student mockStudent1 = new Student();
     private final Student mockStudent2 = new Student();
+    private final Student mockStudent3 = new Student();
+    private final Student mockStudent4 = new Student();
+    private final Student mockStudent5 = new Student();
 
     {
         mockStudent1.setName("Ivan Ivanovich Ivanov");
@@ -31,6 +34,15 @@ public class StudentServiceTest {
 
         mockStudent2.setName("Petr Petrovich Petrov");
         mockStudent2.setAge(19);
+
+        mockStudent3.setName("Sergey Sergeevich Sergeev");
+        mockStudent3.setAge(16);
+
+        mockStudent4.setName("Anton Antonovich Antonov");
+        mockStudent4.setAge(17);
+
+        mockStudent5.setName("Oleg Olegovich Olegov");
+        mockStudent5.setAge(19);
     }
 
     @Mock
@@ -165,5 +177,44 @@ public class StudentServiceTest {
         assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> studentService.getStudentFaculty(mockStudent2.getId()));
 
         verify(studentRepository, times(1)).findById(eq(mockStudent2.getId()));
+    }
+
+    @Test
+    void shouldReturnCountOfAllStudents_ThenReturnStudentsCount() {
+        when(studentRepository.getStudentsCount()).thenReturn(2L);
+
+        Long result = studentService.getAllStudentsCount();
+
+        assertThat(result).isEqualTo(2L);
+
+        verify(studentRepository, times(1)).getStudentsCount();
+    }
+
+    @Test
+    void shouldReturnAverageAgeOfAllStudents_ThenReturnAverageAgeOfAllStudents() {
+        when(studentRepository.getAverageStudentsAge()).thenReturn(17);
+
+        int result = studentService.getStudentsAverageAge();
+
+        assertThat(result).isEqualTo(17);
+
+        verify(studentRepository, times(1)).getAverageStudentsAge();
+    }
+
+    @Test
+    void shouldReturnLastFiveStudents_ThenReturnLastFiveStudentsList() {
+        mockStudent1.setId(17L);
+        mockStudent2.setId(18L);
+        mockStudent3.setId(19L);
+        mockStudent4.setId(20L);
+        mockStudent5.setId(21L);
+
+        when(studentRepository.getLastStudentsInList()).thenReturn(List.of(mockStudent5, mockStudent4, mockStudent3, mockStudent2, mockStudent1));
+
+        List<Student> result = studentService.getLastStudentsInList();
+
+        assertThat(result).isEqualTo(List.of(mockStudent5, mockStudent4, mockStudent3, mockStudent2, mockStudent1));
+
+        verify(studentRepository, times(1)).getLastStudentsInList();
     }
 }

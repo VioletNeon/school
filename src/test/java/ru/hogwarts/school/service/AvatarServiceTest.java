@@ -7,6 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -21,6 +24,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -40,23 +44,36 @@ class AvatarServiceTest {
     @InjectMocks
     private AvatarService avatarService;
 
-    private Student testStudent;
-    private final Avatar testAvatar = new Avatar();
+    private Student testStudent1;
+    private Student testStudent2;
+    private final Avatar testAvatar1 = new Avatar();
+    private final Avatar testAvatar2 = new Avatar();
 
     private final String avatarsDir = "./src/main/resources/images/avatars";
 
     @BeforeEach
     void setUp() throws IOException, NoSuchFieldException, IllegalAccessException {
-        testStudent = new Student();
-        testStudent.setId(1L);
-        testStudent.setName("Harry Potter");
-        testStudent.setAge(11);
+        testStudent1 = new Student();
+        testStudent1.setId(1L);
+        testStudent1.setName("Harry Potter");
+        testStudent1.setAge(11);
 
-        testAvatar.setStudent(testStudent);
-        testAvatar.setFilePath(avatarsDir + "/1.jpg");
-        testAvatar.setFileSize(1024L);
-        testAvatar.setMediaType("image/jpeg");
-        testAvatar.setData(new byte[1024]);
+        testStudent2 = new Student();
+        testStudent2.setId(2L);
+        testStudent2.setName("Ron Weasley");
+        testStudent2.setAge(12);
+
+        testAvatar1.setStudent(testStudent1);
+        testAvatar1.setFilePath(avatarsDir + "/1.jpg");
+        testAvatar1.setFileSize(1024L);
+        testAvatar1.setMediaType("image/jpeg");
+        testAvatar1.setData(new byte[1024]);
+
+        testAvatar2.setStudent(testStudent2);
+        testAvatar2.setFilePath(avatarsDir + "/2.jpg");
+        testAvatar2.setFileSize(1024L);
+        testAvatar2.setMediaType("image/jpeg");
+        testAvatar2.setData(new byte[1024]);
 
         Field avatarsDirField = AvatarService.class.getDeclaredField("avatarsDir");
         avatarsDirField.setAccessible(true);
@@ -70,19 +87,33 @@ class AvatarServiceTest {
     }
 
     @Test
+    void returnAllAvatarsByPageAndSizeParams_existingPageNumberAndPageSize_returnsAvatars() {
+        testAvatar1.setId(1L);
+        testAvatar2.setId(2L);
+        PageRequest pageRequestMock = PageRequest.of(1, 1);
+        Page<Avatar> page = new PageImpl<>(List.of(testAvatar2), pageRequestMock, 2);
+        when(avatarRepository.findAll(pageRequestMock)).thenReturn(page);
+
+        List<Avatar> result = avatarService.getAllAvatars(2, 1);
+
+        assertThat(result).isEqualTo(page.getContent());
+        verify(avatarRepository, times(1)).findAll(pageRequestMock);
+    }
+
+    @Test
     void findAvatar_existingId_returnsAvatar() {
-        testAvatar.setId(1L);
-        when(avatarRepository.findByStudentId(1L)).thenReturn(Optional.of(testAvatar));
+        testAvatar1.setId(1L);
+        when(avatarRepository.findByStudentId(1L)).thenReturn(Optional.of(testAvatar1));
 
         Avatar result = avatarService.findAvatar(1L);
 
-        assertThat(result).isEqualTo(testAvatar);
+        assertThat(result).isEqualTo(testAvatar1);
         verify(avatarRepository, times(1)).findByStudentId(1L);
     }
 
     @Test
     void findAvatar_nonExistingId_throwsAvatarNotFoundException() {
-        testAvatar.setId(2L);
+        testAvatar1.setId(2L);
         when(avatarRepository.findByStudentId(2L)).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> avatarService.findAvatar(2L));
@@ -91,9 +122,9 @@ class AvatarServiceTest {
 
     @Test
     void downloadAvatar_existingAvatar_returnsResponseEntity() throws IOException {
-        testAvatar.setId(3L);
-        testStudent.setId(3L);
-        when(avatarRepository.findByStudentId(3L)).thenReturn(Optional.of(testAvatar));
+        testAvatar1.setId(3L);
+        testStudent1.setId(3L);
+        when(avatarRepository.findByStudentId(3L)).thenReturn(Optional.of(testAvatar1));
 
         Path testFilePath = Path.of(avatarsDir, "3.jpg");
         Files.createFile(testFilePath);
@@ -101,8 +132,8 @@ class AvatarServiceTest {
         ResponseEntity<Resource> responseEntity = avatarService.downloadAvatar(3L);
 
         assertThat(HttpStatus.OK).isEqualTo(responseEntity.getStatusCode());
-        assertThat(testAvatar.getFileSize()).isEqualTo(responseEntity.getHeaders().getContentLength());
-        assertThat(testAvatar.getMediaType()).isEqualTo(Objects.requireNonNull(responseEntity.getHeaders().getContentType()).toString());
+        assertThat(testAvatar1.getFileSize()).isEqualTo(responseEntity.getHeaders().getContentLength());
+        assertThat(testAvatar1.getMediaType()).isEqualTo(Objects.requireNonNull(responseEntity.getHeaders().getContentType()).toString());
 
         Files.deleteIfExists(testFilePath);
 
@@ -111,8 +142,8 @@ class AvatarServiceTest {
 
     @Test
     void downloadAvatar_avatarNotFound_throwsException() {
-        testAvatar.setId(4L);
-        testStudent.setId(4L);
+        testAvatar1.setId(4L);
+        testStudent1.setId(4L);
         when(avatarRepository.findByStudentId(4L)).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> avatarService.downloadAvatar(4L));
@@ -121,12 +152,12 @@ class AvatarServiceTest {
 
     @Test
     void uploadAvatar_validInput_createsAvatar() throws IOException {
-        testAvatar.setId(5L);
-        testStudent.setId(5L);
-        testAvatar.setStudent(testStudent);
-        when(studentService.findStudent(5L)).thenReturn(testStudent);
+        testAvatar1.setId(5L);
+        testStudent1.setId(5L);
+        testAvatar1.setStudent(testStudent1);
+        when(studentService.findStudent(5L)).thenReturn(testStudent1);
         when(avatarRepository.findById(5L)).thenReturn(Optional.empty());
-        when(avatarRepository.save(any(Avatar.class))).thenReturn(testAvatar);
+        when(avatarRepository.save(any(Avatar.class))).thenReturn(testAvatar1);
 
         MultipartFile avatarFile = new MockMultipartFile("avatar", "avatar.jpg", "image/jpeg", "test data".getBytes());
 
@@ -143,9 +174,9 @@ class AvatarServiceTest {
 
     @Test
     void uploadAvatar_avatarFileIsTooBig_throwsException() {
-        testAvatar.setId(6L);
-        testStudent.setId(6L);
-        testAvatar.setStudent(testStudent);
+        testAvatar1.setId(6L);
+        testStudent1.setId(6L);
+        testAvatar1.setStudent(testStudent1);
 
         long fileSizeInBytes = 1024 * 500;
         byte[] largeFileContent = new byte[(int) fileSizeInBytes];
@@ -159,10 +190,10 @@ class AvatarServiceTest {
 
     @Test
     void deleteAvatar_existingAvatar_deletesAvatarAndFile() throws IOException {
-        testAvatar.setId(7L);
-        testStudent.setId(7L);
-        testAvatar.setFilePath(avatarsDir + "/7.jpg");
-        when(avatarRepository.findByStudentId(7L)).thenReturn(Optional.of(testAvatar));
+        testAvatar1.setId(7L);
+        testStudent1.setId(7L);
+        testAvatar1.setFilePath(avatarsDir + "/7.jpg");
+        when(avatarRepository.findByStudentId(7L)).thenReturn(Optional.of(testAvatar1));
         doNothing().when(avatarRepository).deleteById(7L);
 
         Path testFilePath = Path.of(avatarsDir, "7.jpg");
@@ -177,7 +208,7 @@ class AvatarServiceTest {
 
     @Test
     void deleteAvatar_avatarNotFound_throwsException() {
-        testAvatar.setId(8L);
+        testAvatar1.setId(8L);
         when(avatarRepository.findByStudentId(8L)).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(StudentNotFoundException.class).isThrownBy(() -> avatarService.deleteAvatar(8L));
