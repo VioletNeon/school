@@ -21,6 +21,7 @@ import ru.hogwarts.school.service.StudentService;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,6 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class StudentControllerWebMVCTest {
     private final Student mockStudent1 = new Student();
     private final Student mockStudent2 = new Student();
+    private final Student mockStudent3 = new Student();
+    private final Student mockStudent4 = new Student();
+    private final Student mockStudent5 = new Student();
 
     {
         mockStudent1.setName("Ivan Ivanovich Ivanov");
@@ -38,6 +42,15 @@ public class StudentControllerWebMVCTest {
 
         mockStudent2.setName("Petr Petrovich Petrov");
         mockStudent2.setAge(19);
+
+        mockStudent3.setName("Sergey Sergeevich Sergeev");
+        mockStudent3.setAge(16);
+
+        mockStudent4.setName("Anton Antonovich Antonov");
+        mockStudent4.setAge(17);
+
+        mockStudent5.setName("Oleg Olegovich Olegov");
+        mockStudent5.setAge(19);
     }
 
     @Autowired
@@ -199,7 +212,7 @@ public class StudentControllerWebMVCTest {
                         .get("/student/by-age-range?min=18&max=20")
                         .accept(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)))
+                .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(mockStudent2.getId()))
                 .andExpect(jsonPath("$[0].name").value(mockStudent2.getName()))
                 .andExpect(jsonPath("$[0].age").value(mockStudent2.getAge()));
@@ -247,5 +260,56 @@ public class StudentControllerWebMVCTest {
                 .andExpect(status().isNotFound());
 
         verify(studentService, times(1)).findStudent(mockStudent1.getId());
+    }
+
+    @Test
+    void shouldReturnCountOfAllStudents_ThenReturnStudentsCount() throws Exception {
+        when(studentRepository.getStudentsCount()).thenReturn(2L);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/student/count")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(2)));
+
+        verify(studentService, times(1)).getAllStudentsCount();
+    }
+
+    @Test
+    void shouldReturnAverageAgeOfAllStudents_ThenReturnAverageAgeOfAllStudents() throws Exception {
+        when(studentRepository.getAverageStudentsAge()).thenReturn(17);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/student/average-age")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(17)));
+
+        verify(studentService, times(1)).getStudentsAverageAge();
+    }
+
+    @Test
+    void shouldReturnLastFiveStudents_ThenReturnLastFiveStudentsList() throws Exception {
+        mockStudent1.setId(17L);
+        mockStudent2.setId(18L);
+        mockStudent3.setId(19L);
+        mockStudent4.setId(20L);
+        mockStudent5.setId(21L);
+
+        when(studentRepository.getLastStudentsInList()).thenReturn(List.of(mockStudent5, mockStudent4, mockStudent3, mockStudent2, mockStudent1));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/student/last")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(5)))
+                .andExpect(jsonPath("$[0].id").value(mockStudent5.getId()))
+                .andExpect(jsonPath("$[0].name").value(mockStudent5.getName()))
+                .andExpect(jsonPath("$[0].age").value(mockStudent5.getAge()));
+
+        verify(studentService, times(1)).getLastStudentsInList();
     }
 }

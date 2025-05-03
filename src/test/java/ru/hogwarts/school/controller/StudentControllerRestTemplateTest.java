@@ -22,6 +22,7 @@ import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -29,6 +30,10 @@ import static org.assertj.core.api.Assertions.*;
 public class StudentControllerRestTemplateTest {
     private Student mockStudent1 = new Student();
     private Student mockStudent2 = new Student();
+    private Student mockStudent3 = new Student();
+    private Student mockStudent4 = new Student();
+    private Student mockStudent5 = new Student();
+    private Student mockStudent6 = new Student();
 
     @LocalServerPort
     private int port;
@@ -60,6 +65,22 @@ public class StudentControllerRestTemplateTest {
         mockStudent2 = new Student();
         mockStudent2.setName("Petr Petrovich Petrov");
         mockStudent2.setAge(19);
+
+        mockStudent3 = new Student();
+        mockStudent3.setName("Sergey Sergeevich Sergeev");
+        mockStudent3.setAge(16);
+
+        mockStudent4 = new Student();
+        mockStudent4.setName("Anton Antonovich Antonov");
+        mockStudent4.setAge(17);
+
+        mockStudent5 = new Student();
+        mockStudent5.setName("Oleg Olegovich Olegov");
+        mockStudent5.setAge(19);
+
+        mockStudent6 = new Student();
+        mockStudent6.setName("Semen Semenovich Semenov");
+        mockStudent6.setAge(16);
     }
 
     @Test
@@ -226,5 +247,63 @@ public class StudentControllerRestTemplateTest {
         List<Student> expectedStudentList = List.of(mockStudent1, mockStudent2);
 
         assertThat(result).isEqualTo(expectedStudentList);
+    }
+
+    @Test
+    void shouldReturnCountOfAllStudents_ThenReturnStudentsCount() throws StudentNotFoundException {
+        studentController.addStudent(mockStudent1);
+        studentController.addStudent(mockStudent2);
+
+        ResponseEntity<Long> response = this.restTemplate.getForEntity("http://localhost:" + port + "/student/count", Long.class);
+
+        assertThat(response.getBody()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldReturnAverageAgeOfAllStudents_ThenReturnAverageAgeOfAllStudents() throws StudentNotFoundException {
+        long student1Id = studentController.addStudent(mockStudent1);
+        long student3Id = studentController.addStudent(mockStudent3);
+        long student4Id = studentController.addStudent(mockStudent4);
+        long student5Id = studentController.addStudent(mockStudent5);
+        long student6Id = studentController.addStudent(mockStudent6);
+
+        mockStudent1.setId(student1Id);
+        mockStudent3.setId(student3Id);
+        mockStudent4.setId(student4Id);
+        mockStudent5.setId(student5Id);
+        mockStudent6.setId(student6Id);
+
+        ResponseEntity<Long> response = this.restTemplate.getForEntity("http://localhost:" + port + "/student/average-age", Long.class);
+
+        assertThat(response.getBody()).isEqualTo(17);
+    }
+
+    @Test
+    void shouldReturnLastFiveStudents_ThenReturnLastFiveStudentsList() throws StudentNotFoundException {
+        long student1Id = studentController.addStudent(mockStudent1);
+        long student2Id = studentController.addStudent(mockStudent2);
+        long student3Id = studentController.addStudent(mockStudent3);
+        long student4Id = studentController.addStudent(mockStudent4);
+        long student5Id = studentController.addStudent(mockStudent5);
+        long student6Id = studentController.addStudent(mockStudent6);
+
+        mockStudent1.setId(student1Id);
+        mockStudent2.setId(student2Id);
+        mockStudent3.setId(student3Id);
+        mockStudent4.setId(student4Id);
+        mockStudent5.setId(student5Id);
+        mockStudent6.setId(student6Id);
+
+        ResponseEntity<List<Student>> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/student/last",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Student>>() {}
+        );
+
+        List<Student> expectedStudentList = List.of(mockStudent6, mockStudent5, mockStudent4, mockStudent3, mockStudent2);
+
+        assertThat(Objects.requireNonNull(response.getBody()).size()).isEqualTo(5);
+        assertThat(response.getBody()).isEqualTo(expectedStudentList);
     }
 }
