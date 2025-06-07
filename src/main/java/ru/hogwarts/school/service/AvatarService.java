@@ -1,6 +1,8 @@
 package ru.hogwarts.school.service;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -31,6 +33,8 @@ public class AvatarService {
     private final AvatarRepository avatarRepository;
     private final StudentService studentService;
 
+    private static final Logger logger = LoggerFactory.getLogger(AvatarService.class);
+
     @Value("${path.to.avatars.folder}")
     private String avatarsDir;
 
@@ -42,12 +46,19 @@ public class AvatarService {
 
     public List<Avatar> getAllAvatars(Integer pageNumber, Integer pageSize) {
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, pageSize);
+        logger.info("Was invoked method to get all avatars");
 
         return avatarRepository.findAll(pageRequest).getContent();
     }
 
     public Avatar findAvatar(long studentId) {
-        return avatarRepository.findByStudentId(studentId).orElseThrow(() -> new StudentNotFoundException(studentId));
+        logger.info("Was invoked method to find avatar by student id");
+
+        return avatarRepository.findByStudentId(studentId).orElseThrow(() -> {
+            logger.error("There is not avatar with student id = {}", studentId);
+
+            return new StudentNotFoundException(studentId);
+        });
     }
 
     public ResponseEntity<Resource> downloadAvatar(Long studentId) throws IOException {
@@ -55,6 +66,7 @@ public class AvatarService {
 
         Path path = Path.of(avatar.getFilePath());
         Resource resource = new UrlResource(path.toUri());
+        logger.info("Was invoked method to download avatar by student id");
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename())
@@ -65,9 +77,12 @@ public class AvatarService {
 
     public void uploadAvatar(Long studentId, MultipartFile avatarFile) throws IOException {
         if (avatarFile.getSize() > 1024 * 300) {
+            logger.error("The avatar file size must not exceed big size");
+
             throw new AvatarNotAllowedBigFileSizeException(avatarFile.getSize());
         }
 
+        logger.info("Was invoked method to upload avatar");
         Student student = studentService.findStudent(studentId);
         Path filePath = Path.of(avatarsDir, student.getId() + "." + getExtensions(Objects.requireNonNull(avatarFile.getOriginalFilename())));
 
@@ -99,11 +114,14 @@ public class AvatarService {
         Path filePath = Path.of(avatar.getFilePath());
 
         Files.deleteIfExists(filePath);
+        logger.info("Was invoked method to delete avatar from db");
 
         avatarRepository.deleteById(avatar.getId());
     }
 
     private String getExtensions(String fileName) {
+        logger.debug("Was invoked method to get avatar file extension by file name");
+
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 }
