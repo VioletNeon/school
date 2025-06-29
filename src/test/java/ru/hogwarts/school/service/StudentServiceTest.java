@@ -217,4 +217,31 @@ public class StudentServiceTest {
 
         verify(studentRepository, times(1)).getLastStudentsInList();
     }
+
+    @Test
+    void shouldFindStudentsWithNamesStartWithA_ThenReturnThatStudentsListNames() {
+        mockStudent4.setId(8L);
+        mockStudent5.setId(9L);
+        List<Student> mockStudentList = List.of(mockStudent4, mockStudent5);
+
+        when(studentRepository.findAll()).thenReturn(mockStudentList);
+
+        List<String> result = studentService.getStudentsStartWithCharA();
+
+        assertThat(result).hasSize(1);
+        assertThat(result).contains(mockStudent4.getName().toUpperCase());
+    }
+
+    @Test
+    void shouldFindStudentsAverageAgeUsingStreamAPI_ThenReturnThatStudentsAverageAge() {
+        mockStudent4.setId(8L);
+        mockStudent5.setId(9L);
+        List<Student> mockStudentList = List.of(mockStudent4, mockStudent5);
+
+        when(studentRepository.findAll()).thenReturn(mockStudentList);
+
+        Integer result = studentService.getAverageAge();
+
+        assertThat(result).isEqualTo((mockStudent4.getAge() + mockStudent5.getAge()) / 2);
+    }
 }

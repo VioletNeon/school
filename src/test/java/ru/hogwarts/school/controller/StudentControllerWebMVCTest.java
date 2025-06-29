@@ -312,4 +312,42 @@ public class StudentControllerWebMVCTest {
 
         verify(studentService, times(1)).getLastStudentsInList();
     }
+
+    @Test
+    void shouldFindStudentsWithNamesStartWithA_ThenReturnThatStudentsListNames() throws Exception {
+        mockStudent1.setId(17L);
+        mockStudent2.setId(18L);
+        mockStudent3.setId(19L);
+        mockStudent4.setId(20L);
+        mockStudent5.setId(21L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(mockStudent5, mockStudent4, mockStudent3, mockStudent2, mockStudent1));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/student/starts-with-a")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0]").value(mockStudent4.getName().toUpperCase()));
+
+        verify(studentService, times(1)).getStudentsStartWithCharA();
+    }
+
+    @Test
+    void shouldFindStudentsAverageAgeUsingStreamAPI_ThenReturnThatStudentsAverageAge() throws Exception {
+        mockStudent4.setId(20L);
+        mockStudent5.setId(21L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(mockStudent5, mockStudent4));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/student/stream-average-age")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value((mockStudent4.getAge() + mockStudent5.getAge()) / 2));
+
+        verify(studentService, times(1)).getAverageAge();
+    }
 }

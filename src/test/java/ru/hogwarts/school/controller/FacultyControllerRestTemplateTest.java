@@ -168,6 +168,40 @@ public class FacultyControllerRestTemplateTest {
     }
 
     @Test
+    void shouldFindTheLongestFacultiesName_ThenReturnThatFacultyName() {
+        long faculty1Id = facultyController.addFaculty(mockFaculty1);
+        long faculty2Id = facultyController.addFaculty(mockFaculty2);
+
+        mockFaculty1.setId(faculty1Id);
+        mockFaculty2.setId(faculty2Id);
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/faculty/longest-name",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<String>() {}
+        );
+
+        String result = response.getBody();
+
+        assertThat(result).isEqualTo(mockFaculty1.getName());
+    }
+
+    @Test
+    void shouldReturnSumFromZeroToOneMillion_ThenReturnThatCalculatedSum() {
+        ResponseEntity<Integer> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/faculty/sum",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Integer>() {}
+        );
+
+        Integer result = response.getBody();
+
+        assertThat(result).isEqualTo(1784293664);
+    }
+
+    @Test
     void shouldFindFacultyCollectionFilteredByName_ThenReturnThatFacultyCollection() {
         long faculty1Id = facultyController.addFaculty(mockFaculty1);
         long faculty2Id = facultyController.addFaculty(mockFaculty2);

@@ -187,4 +187,24 @@ public class FacultyServiceTest {
 
         verify(facultyRepository, times(1)).findById(eq(mockFaculty2.getId()));
     }
+
+    @Test
+    void shouldFindTheLongestFacultiesName_ThenReturnThatFacultyName() {
+        mockFaculty1.setId(17L);
+        mockFaculty2.setId(18L);
+        List<Faculty> mockFacultyList = List.of(mockFaculty1, mockFaculty2);
+
+        when(facultyRepository.findAll()).thenReturn(mockFacultyList);
+
+        String result = facultyService.getLongestFacultiesName();
+
+        assertThat(result).isEqualTo(mockFaculty1.getName());
+    }
+
+    @Test
+    void shouldReturnSumFromZeroToOneMillion_ThenReturnThatCalculatedSum() {
+        Integer result = facultyService.getCalculatedSum();
+
+        assertThat(result).isEqualTo(1784293664);
+    }
 }

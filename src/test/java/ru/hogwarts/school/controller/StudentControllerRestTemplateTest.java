@@ -34,6 +34,8 @@ public class StudentControllerRestTemplateTest {
     private Student mockStudent4 = new Student();
     private Student mockStudent5 = new Student();
     private Student mockStudent6 = new Student();
+    private Student mockStudent7 = new Student();
+    private Student mockStudent8 = new Student();
 
     @LocalServerPort
     private int port;
@@ -81,6 +83,14 @@ public class StudentControllerRestTemplateTest {
         mockStudent6 = new Student();
         mockStudent6.setName("Semen Semenovich Semenov");
         mockStudent6.setAge(16);
+
+        mockStudent7 = new Student();
+        mockStudent7.setName("Artem Artemovich Artemov");
+        mockStudent7.setAge(14);
+
+        mockStudent8 = new Student();
+        mockStudent8.setName("Fedor Fedorovich Fedorov");
+        mockStudent8.setAge(15);
     }
 
     @Test
@@ -305,5 +315,49 @@ public class StudentControllerRestTemplateTest {
 
         assertThat(Objects.requireNonNull(response.getBody()).size()).isEqualTo(5);
         assertThat(response.getBody()).isEqualTo(expectedStudentList);
+    }
+
+    @Test
+    void shouldFindStudentsWithNamesStartWithA_ThenReturnThatStudentsListNames() {
+        long student1Id = studentController.addStudent(mockStudent7);
+        long student2Id = studentController.addStudent(mockStudent8);
+
+        mockStudent1.setId(student1Id);
+        mockStudent2.setId(student2Id);
+
+        ResponseEntity<List<String>> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/student/starts-with-a",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<String>>() {}
+        );
+
+        List<String> result = response.getBody();
+
+        List<String> expectedNamesList = List.of(mockStudent7.getName().toUpperCase());
+
+        assertThat(result).isEqualTo(expectedNamesList);
+    }
+
+    @Test
+    void shouldFindStudentsAverageAgeUsingStreamAPI_ThenReturnThatStudentsAverageAge() {
+        long student1Id = studentController.addStudent(mockStudent7);
+        long student2Id = studentController.addStudent(mockStudent8);
+
+        mockStudent1.setId(student1Id);
+        mockStudent2.setId(student2Id);
+
+        ResponseEntity<Integer> response = this.restTemplate.exchange(
+                "http://localhost:" + port + "/student/stream-average-age",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Integer>() {}
+        );
+
+        Integer result = response.getBody();
+
+        Integer expectedAge = (mockStudent7.getAge() + mockStudent8.getAge()) / 2;
+
+        assertThat(result).isEqualTo(expectedAge);
     }
 }
