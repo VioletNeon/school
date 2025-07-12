@@ -10,7 +10,9 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 public class FacultyService {
@@ -54,6 +56,23 @@ public class FacultyService {
         logger.info("Was invoked method to get all faculties");
 
         return facultyRepository.findAll();
+    }
+
+    public String getLongestFacultiesName() {
+        logger.info("Was invoked method to get the longest faculties name");
+
+        return facultyRepository
+                .findAll()
+                .stream()
+                .map(Faculty::getName)
+                .max(Comparator.comparingInt(String::length))
+                .orElse("");
+    }
+
+    public Integer getCalculatedSum() {
+        logger.info("Was invoked method to get calculated sum from 1 to 1 000 000");
+
+        return IntStream.rangeClosed(1, 1_000_000).parallel().sum();
     }
 
     public List<Faculty> getFacultiesByNameOrColor(String name, String color) {

@@ -56,6 +56,16 @@ public class StudentController {
         return studentService.getLastStudentsInList();
     }
 
+    @GetMapping("/starts-with-a")
+    public List<String> getStudentsStartWithA() {
+        return studentService.getStudentsStartWithCharA();
+    }
+
+    @GetMapping("/stream-average-age")
+    public Integer getAverageAge() {
+        return studentService.getAverageAge();
+    }
+
     @PostMapping
     public long addStudent(@RequestBody Student student) {
         return studentService.addStudent(student);

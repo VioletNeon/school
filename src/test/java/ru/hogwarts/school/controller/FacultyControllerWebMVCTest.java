@@ -285,4 +285,32 @@ public class FacultyControllerWebMVCTest {
 
         verify(facultyService, times(1)).findFaculty(mockFaculty1.getId());
     }
+
+    @Test
+    void shouldReturnTheLongestFacultiesName_ThenReturnTheseFacultiesName() throws Exception {
+        mockFaculty1.setId(17L);
+        mockFaculty2.setId(18L);
+        List<Faculty> mockFacultyList = List.of(mockFaculty1);
+
+        when(facultyRepository.findAll()).thenReturn(mockFacultyList);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/faculty/longest-name")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(jsonPath("$").value(mockFaculty1.getName()));
+
+        verify(facultyService, times(1)).getLongestFacultiesName();
+    }
+
+    @Test
+    void shouldReturnSumFromZeroToOneMillion_ThenReturnThatCalculatedSum() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/faculty/sum")
+                        .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(jsonPath("$").value(1784293664));
+
+        verify(facultyService, times(1)).getCalculatedSum();
+    }
 }
