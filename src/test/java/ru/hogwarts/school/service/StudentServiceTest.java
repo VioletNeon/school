@@ -27,6 +27,7 @@ public class StudentServiceTest {
     private final Student mockStudent3 = new Student();
     private final Student mockStudent4 = new Student();
     private final Student mockStudent5 = new Student();
+    private final Student mockStudent6 = new Student();
 
     {
         mockStudent1.setName("Ivan Ivanovich Ivanov");
@@ -43,6 +44,9 @@ public class StudentServiceTest {
 
         mockStudent5.setName("Oleg Olegovich Olegov");
         mockStudent5.setAge(19);
+
+        mockStudent5.setName("Fedor Fedorovich Fedorov");
+        mockStudent5.setAge(18);
     }
 
     @Mock
@@ -243,5 +247,51 @@ public class StudentServiceTest {
         Integer result = studentService.getAverageAge();
 
         assertThat(result).isEqualTo((mockStudent4.getAge() + mockStudent5.getAge()) / 2);
+    }
+
+    @Test
+    void getPrintParallel_ShouldPrintStudentNames() {
+        mockStudent1.setId(10L);
+        mockStudent2.setId(11L);
+        mockStudent3.setId(12L);
+        mockStudent4.setId(13L);
+        mockStudent5.setId(14L);
+        mockStudent6.setId(15L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(
+                mockStudent1,
+                mockStudent2,
+                mockStudent3,
+                mockStudent4,
+                mockStudent5,
+                mockStudent6
+        ));
+
+        studentService.getPrintParallel();
+
+        verify(studentRepository, times(1)).findAll();
+    }
+
+    @Test
+    void getSynchronizedPrint_ShouldPrintStudentNamesSynchronized() {
+        mockStudent1.setId(16L);
+        mockStudent2.setId(17L);
+        mockStudent3.setId(18L);
+        mockStudent4.setId(19L);
+        mockStudent5.setId(20L);
+        mockStudent6.setId(21L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(
+                mockStudent1,
+                mockStudent2,
+                mockStudent3,
+                mockStudent4,
+                mockStudent5,
+                mockStudent6
+        ));
+
+        studentService.getSynchronizedPrint();
+
+        verify(studentRepository, times(1)).findAll();
     }
 }

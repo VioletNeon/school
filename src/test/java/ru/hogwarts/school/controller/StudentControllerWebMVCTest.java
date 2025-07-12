@@ -35,6 +35,7 @@ public class StudentControllerWebMVCTest {
     private final Student mockStudent3 = new Student();
     private final Student mockStudent4 = new Student();
     private final Student mockStudent5 = new Student();
+    private final Student mockStudent6 = new Student();
 
     {
         mockStudent1.setName("Ivan Ivanovich Ivanov");
@@ -51,6 +52,9 @@ public class StudentControllerWebMVCTest {
 
         mockStudent5.setName("Oleg Olegovich Olegov");
         mockStudent5.setAge(19);
+
+        mockStudent5.setName("Fedor Fedorovich Fedorov");
+        mockStudent5.setAge(18);
     }
 
     @Autowired
@@ -349,5 +353,54 @@ public class StudentControllerWebMVCTest {
                 .andExpect(jsonPath("$").value((mockStudent4.getAge() + mockStudent5.getAge()) / 2));
 
         verify(studentService, times(1)).getAverageAge();
+    }
+
+    @Test
+    void getPrintParallel_WebMvc_ShouldCallService() throws Exception {
+        mockStudent1.setId(22L);
+        mockStudent2.setId(23L);
+        mockStudent3.setId(24L);
+        mockStudent4.setId(25L);
+        mockStudent5.setId(26L);
+        mockStudent6.setId(27L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(
+                mockStudent1,
+                mockStudent2,
+                mockStudent3,
+                mockStudent4,
+                mockStudent5,
+                mockStudent6
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/students/print-parallel"))
+                .andExpect(status().isOk());
+
+
+        verify(studentService, times(1)).getPrintParallel();
+    }
+
+    @Test
+    void getSynchronizedPrint_WebMvc_ShouldCallService() throws Exception {
+        mockStudent1.setId(28L);
+        mockStudent2.setId(29L);
+        mockStudent3.setId(30L);
+        mockStudent4.setId(31L);
+        mockStudent5.setId(32L);
+        mockStudent6.setId(33L);
+
+        when(studentRepository.findAll()).thenReturn(List.of(
+                mockStudent1,
+                mockStudent2,
+                mockStudent3,
+                mockStudent4,
+                mockStudent5,
+                mockStudent6
+        ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/students/print-synchronized"))
+                .andExpect(status().isOk());
+
+        verify(studentService, times(1)).getSynchronizedPrint();
     }
 }
