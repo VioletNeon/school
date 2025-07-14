@@ -123,4 +123,59 @@ public class StudentService {
 
         return studentRepository.getLastStudentsInList();
     }
+
+    public void getPrintParallel() {
+        logger.info("Was invoked method to print students in parallel processes");
+
+        List<Student> students = studentRepository.findAll();
+
+        System.out.println(students.get(0).getName());
+        System.out.println(students.get(1).getName());
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println(students.get(2).getName());
+            System.out.println(students.get(3).getName());
+        }).start();
+
+        new Thread(() -> {
+            System.out.println(students.get(4).getName());
+            System.out.println(students.get(5).getName());
+        }).start();
+    }
+
+    private synchronized void printStudentNameSynchronized(String studentName) {
+        System.out.println(studentName);
+    }
+
+    public void getSynchronizedPrint() {
+        logger.info("Was invoked method to print students in synchronized parallel processes");
+
+        List<Student> students = studentRepository.findAll();
+
+        System.out.println(students.get(0).getName());
+        System.out.println(students.get(1).getName());
+
+        new Thread(() -> {
+            printStudentNameSynchronized(students.get(2).getName());
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            printStudentNameSynchronized(students.get(3).getName());
+        }).start();
+
+        new Thread(() -> {
+            printStudentNameSynchronized(students.get(4).getName());
+            printStudentNameSynchronized(students.get(5).getName());
+        }).start();
+    }
 }

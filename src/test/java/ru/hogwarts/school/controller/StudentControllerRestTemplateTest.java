@@ -360,4 +360,49 @@ public class StudentControllerRestTemplateTest {
 
         assertThat(result).isEqualTo(expectedAge);
     }
+
+    @Test
+    void getPrintParallel_RestTemplate_ShouldCallService() {
+        long student1Id = studentController.addStudent(mockStudent1);
+        long student2Id = studentController.addStudent(mockStudent2);
+        long student3Id = studentController.addStudent(mockStudent3);
+        long student4Id = studentController.addStudent(mockStudent4);
+        long student5Id = studentController.addStudent(mockStudent5);
+        long student6Id = studentController.addStudent(mockStudent6);
+
+        mockStudent1.setId(student1Id);
+        mockStudent2.setId(student2Id);
+        mockStudent3.setId(student3Id);
+        mockStudent4.setId(student4Id);
+        mockStudent5.setId(student5Id);
+        mockStudent6.setId(student6Id);
+
+        ResponseEntity<Void> response = restTemplate.getForEntity(
+                "http://localhost:" + port + "/student/students/print-parallel",
+                Void.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void getSynchronizedPrint_RestTemplate_ShouldCallService() {
+        long student1Id = studentController.addStudent(mockStudent1);
+        long student2Id = studentController.addStudent(mockStudent2);
+        long student3Id = studentController.addStudent(mockStudent3);
+        long student4Id = studentController.addStudent(mockStudent4);
+        long student5Id = studentController.addStudent(mockStudent5);
+        long student6Id = studentController.addStudent(mockStudent6);
+
+        mockStudent1.setId(student1Id);
+        mockStudent2.setId(student2Id);
+        mockStudent3.setId(student3Id);
+        mockStudent4.setId(student4Id);
+        mockStudent5.setId(student5Id);
+        mockStudent6.setId(student6Id);
+
+        ResponseEntity<Void> response = restTemplate.getForEntity("http://localhost:" + port + "/student/students/print-synchronized", Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
 }
